@@ -5,6 +5,7 @@ on:
     paths:
       - 'tgs2026/**'
       - 'scripts/build_tgs_pages.py'
+      - 'scripts/restore_tgs_explorer.py'
       - 'source/2026_TGS_MAP_0914_EN.pdf'
       - '.github/workflows/tgs-pages.yml'
   workflow_dispatch:
@@ -27,6 +28,8 @@ jobs:
           "$RUNNER_TEMP/tgs-python/bin/pip" install --disable-pip-version-check 'PyMuPDF==1.26.7' 'Pillow==11.3.0'
       - name: Validate and prepare root website
         run: '"$RUNNER_TEMP/tgs-python/bin/python" scripts/build_tgs_pages.py'
+      - name: Restore focused regions and 3D floors
+        run: '"$RUNNER_TEMP/tgs-python/bin/python" scripts/restore_tgs_explorer.py'
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
