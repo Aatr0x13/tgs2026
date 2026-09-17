@@ -1,0 +1,49 @@
+name: Deploy TGS map to GitHub Pages
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'tgs2026/**'
+      - 'scripts/build_tgs_pages.py'
+      - 'source/2026_TGS_MAP_0914_EN.pdf'
+      - '.github/workflows/tgs-pages.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: tgs-pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install map renderer
+        run: |
+          python3 -m venv "$RUNNER_TEMP/tgs-python"
+          "$RUNNER_TEMP/tgs-python/bin/pip" install --disable-pip-version-check 'PyMuPDF==1.26.7' 'Pillow==11.3.0'
+      - name: Validate and prepare root website
+        run: '"$RUNNER_TEMP/tgs-python/bin/python" scripts/build_tgs_pages.py'
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check existing Pages configuration
+        uses: actions/configure-pages@v5
+      - name: Publish verified map
+        id: deployment
+        uses: actions/deploy-pages@v5
